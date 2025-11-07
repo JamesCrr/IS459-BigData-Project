@@ -50,7 +50,7 @@ class AirlineDataLoader:
         carriers_path = os.path.join(self.data_path, "carriers.csv")
         if os.path.exists(carriers_path):
             print(f"\n📁 Loading carriers data from: {carriers_path}")
-            self.carriers_df = pd.read_csv(carriers_path)
+            self.carriers_df = pd.read_csv(carriers_path, encoding='latin-1')
             print(f"   ✓ Loaded {len(self.carriers_df):,} carriers")
         else:
             print(f"   ⚠ Carriers file not found: {carriers_path}")
@@ -68,31 +68,23 @@ class AirlineDataLoader:
             print(f"   File size: {file_size:.2f} GB")
             
             if sample_size:
-                # Random sampling for large files
-                print(f"   Sampling {sample_size:,} rows...")
+                # For large sample sizes, just read sequentially to avoid memory issues
+                print(f"   Loading {sample_size:,} rows sequentially...")
                 
-                # Get total rows (reading first to get count)
-                print("   Counting total rows...")
-                total_rows = sum(1 for _ in open(airline_path, encoding='utf-8', errors='ignore')) - 1
-                print(f"   Total rows in file: {total_rows:,}")
-                
-                if sample_size >= total_rows:
-                    print("   Sample size >= total rows, loading all data...")
-                    self.airline_df = pd.read_csv(airline_path, low_memory=False)
-                else:
-                    # Calculate skip probability for random sampling
-                    skip_prob = 1 - (sample_size / total_rows)
-                    print(f"   Skip probability: {skip_prob:.3f}")
-                    
-                    self.airline_df = pd.read_csv(
-                        airline_path,
-                        skiprows=lambda i: i > 0 and np.random.random() > (1 - skip_prob),
-                        low_memory=False
-                    )
+                self.airline_df = pd.read_csv(
+                    airline_path,
+                    nrows=sample_size,
+                    low_memory=False,
+                    encoding='latin-1'
+                )
             else:
                 # Load all data
                 print("   Loading full dataset...")
-                self.airline_df = pd.read_csv(airline_path, low_memory=False)
+                self.airline_df = pd.read_csv(
+                    airline_path,
+                    low_memory=False,
+                    encoding='latin-1'
+                )
                 
             print(f"   ✓ Loaded {len(self.airline_df):,} flight records")
             print(f"   ✓ Columns: {self.airline_df.shape[1]}")

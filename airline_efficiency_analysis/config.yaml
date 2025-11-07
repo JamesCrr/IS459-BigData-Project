@@ -1,0 +1,127 @@
+# Configuration File - Airline Efficiency Analysis
+# Edit these settings to customize your analysis
+
+# ============================================================================
+# SYSTEM CONFIGURATION
+# ============================================================================
+system:
+  ram_gb: 48                    # Available RAM
+  chunk_size: 1000000           # Rows to process at once (reduce if memory issues)
+  max_workers: 8                # Parallel processing threads
+  random_seed: 42               # For reproducibility
+
+# ============================================================================
+# DATA SETTINGS
+# ============================================================================
+data:
+  # Paths (relative to project root)
+  raw_data: "./data/raw/"
+  processed_data: "./data/processed/"
+  
+  # Loading options
+  sample_size: null             # null = load full dataset, or specify number (e.g., 1000000)
+  
+  # Memory optimization - these dtypes reduce RAM usage by 40-60%
+  optimize_memory: true
+
+# ============================================================================
+# FEATURE ENGINEERING
+# ============================================================================
+features:
+  create_efficiency_features: true
+  create_delay_features: true
+  create_aircraft_features: true
+  create_temporal_features: true
+  create_historical_features: true
+  
+  # Delay thresholds (minutes)
+  significant_delay: 15
+  severe_delay: 60
+
+# ============================================================================
+# BUSINESS QUESTION 1: EFFICIENCY ANALYSIS
+# ============================================================================
+efficiency:
+  # Bottleneck scoring weights (must sum to 1.0)
+  weights:
+    taxi_out: 0.35
+    taxi_in: 0.30
+    air_time: 0.20
+    turnaround: 0.15
+  
+  # Minimum flights for analysis
+  min_flights_route: 100
+  min_flights_carrier: 1000
+  
+  # Number of results to show
+  top_routes: 20
+  top_carriers: 10
+
+# ============================================================================
+# BUSINESS QUESTION 2: CASCADE ANALYSIS
+# ============================================================================
+cascade:
+  # Robustness scoring weights (must sum to 1.0)
+  weights:
+    delay_absorption: 0.25
+    cascade_resistance: 0.25
+    reliability: 0.20
+    buffer_efficiency: 0.30
+  
+  # Aircraft rotation settings
+  max_turnaround_minutes: 240
+  min_turnaround_minutes: 30
+
+# ============================================================================
+# MACHINE LEARNING MODELS
+# ============================================================================
+ml:
+  # Model selection
+  use_random_forest: true
+  use_gradient_boosting: true
+  use_ensemble: true
+  
+  # Train/Val/Test split
+  train_size: 0.70
+  val_size: 0.15
+  test_size: 0.15
+  
+  # Random Forest parameters
+  random_forest:
+    n_estimators: 200
+    max_depth: 20
+    min_samples_split: 100
+    min_samples_leaf: 50
+    n_jobs: -1
+  
+  # Gradient Boosting parameters
+  gradient_boosting:
+    n_estimators: 150
+    learning_rate: 0.05
+    max_depth: 10
+    min_samples_split: 100
+
+# ============================================================================
+# VISUALIZATION
+# ============================================================================
+visualization:
+  figure_size: [14, 7]
+  dpi: 100
+  style: "whitegrid"
+  palette: "husl"
+  save_plots: true
+  create_interactive: true      # Plotly dashboards
+
+# ============================================================================
+# OUTPUT SETTINGS
+# ============================================================================
+output:
+  save_models: true
+  save_results: true
+  formats: ["csv", "html"]
+  
+# Notes:
+# - Reduce chunk_size if you encounter memory errors
+# - Set sample_size to a number (e.g., 1000000) to test with smaller data
+# - Adjust weights to prioritize different aspects of analysis
+# - Set optimize_memory: false to keep original dtypes (uses more RAM)

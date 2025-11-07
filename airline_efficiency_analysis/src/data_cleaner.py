@@ -134,8 +134,17 @@ class AirlineDataCleaner:
         initial_missing = df.isnull().sum().sum()
         
         # Critical columns - remove rows if missing
-        critical_cols = ['FlightDate', 'Reporting_Airline', 'Origin', 'Dest']
-        df = df.dropna(subset=critical_cols)
+        # Adjust column names to match actual dataset
+        critical_cols = []
+        if 'UniqueCarrier' in df.columns:
+            critical_cols.append('UniqueCarrier')
+        if 'Origin' in df.columns:
+            critical_cols.append('Origin')
+        if 'Dest' in df.columns:
+            critical_cols.append('Dest')
+        
+        if critical_cols:
+            df = df.dropna(subset=critical_cols)
         
         # Cancelled flights - fill delay columns with 0
         if 'Cancelled' in df.columns:
@@ -174,16 +183,21 @@ class AirlineDataCleaner:
         initial_len = len(df)
         
         # Define key columns for duplicate detection
+        # Use Year, Month, DayofMonth instead of FlightDate
         key_cols = [
-            'FlightDate', 'Reporting_Airline', 'Tail_Number',
-            'Origin', 'Dest', 'CRSDepTime'
+            'Year', 'Month', 'DayofMonth', 'UniqueCarrier', 'TailNum',
+            'FlightNum', 'Origin', 'Dest', 'CRSDepTime'
         ]
         
         # Keep columns that exist
         existing_key_cols = [col for col in key_cols if col in df.columns]
         
-        if existing_key_cols:
+        # Only remove exact duplicates if we have enough key columns
+        if len(existing_key_cols) >= 6:
             df = df.drop_duplicates(subset=existing_key_cols, keep='first')
+        else:
+            # If we don't have enough columns, just remove complete row duplicates
+            df = df.drop_duplicates(keep='first')
             
         removed = initial_len - len(df)
         print(f"   ✓ Removed {removed:,} duplicate records")
@@ -304,15 +318,18 @@ class AirlineDataCleaner:
     def _merge_carriers(self, df: pd.DataFrame, carriers_df: pd.DataFrame) -> pd.DataFrame:
         """Merge carrier information"""
         
+        # Determine the carrier code column name in the main dataframe
+        carrier_col = 'UniqueCarrier' if 'UniqueCarrier' in df.columns else 'Reporting_Airline'
+        
         if 'Code' in carriers_df.columns and 'Description' in carriers_df.columns:
             carriers_clean = carriers_df.rename(columns={
-                'Code': 'Reporting_Airline',
+                'Code': carrier_col,
                 'Description': 'Carrier_Name'
             })
             
             df = df.merge(
-                carriers_clean[['Reporting_Airline', 'Carrier_Name']],
-                on='Reporting_Airline',
+                carriers_clean[[carrier_col, 'Carrier_Name']],
+                on=carrier_col,
                 how='left'
             )
             print(f"   ✓ Merged carrier information")
